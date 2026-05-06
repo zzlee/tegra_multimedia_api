@@ -195,9 +195,13 @@ int zznvcodec_decoder_blocking::Start() {
 		LOGE("%s(%d): setFrameInputMode failed, err=%d", __FUNCTION__, __LINE__, ret);
 	}
 
-    ret = mDecoder->disableDPB();
-	if(ret) {
-		LOGE("%s(%d): disableDPB failed, err=%d", __FUNCTION__, __LINE__, ret);
+	
+	if(mLOWLATENCY)
+	{
+		ret = mDecoder->disableDPB();
+		if(ret) {
+			LOGE("%s(%d): disableDPB failed, err=%d", __FUNCTION__, __LINE__, ret);
+		}
 	}
 
 	//if (mFormat == ZZNVCODEC_PIXEL_FORMAT_NV24)

@@ -11,6 +11,7 @@ zznvcodec_decoder_t::zznvcodec_decoder_t() {
 	mOnVideoFrame_User = 0;
 
 	mCodecType = ZZNVCODEC_CODEC_TYPE_UNKNOWN;
+	mLOWLATENCY = 1;
 }
 
 zznvcodec_decoder_t::~zznvcodec_decoder_t() {
@@ -26,6 +27,10 @@ void zznvcodec_decoder_t::SetMiscProperty(int nProperty, intptr_t pValue) {
 	switch(nProperty) {
 	case ZZNVCODEC_PROP_CODEC_TYPE:
 		mCodecType = *(zznvcodec_codec_type_t*)pValue;
+		break;
+
+	case ZZNVCODEC_PROP_LOWLATENCY:
+		mLOWLATENCY = *(int*)pValue;
 		break;
 
 	default:
