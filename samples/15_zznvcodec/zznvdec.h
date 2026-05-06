@@ -27,6 +27,7 @@ protected:
 	intptr_t mOnVideoFrame_User;
 
 	zznvcodec_codec_type_t mCodecType;
+	bool mLOWLATENCY;
 
 	void OnVideoFrame(zznvcodec_video_frame_t* pFrame, int64_t nTimestamp);
 };
