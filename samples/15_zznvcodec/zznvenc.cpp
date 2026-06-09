@@ -63,6 +63,9 @@ struct zznvcodec_encoder_t {
 	int mPreloadBuffersIndex;
 	int mOutputPlaneFDs[32];
 
+	zznvcodec_color_information_t mColorInformation;
+	bool bExtColorFmt;
+
 	explicit zznvcodec_encoder_t() {
 		mState = STATE_READY;
 
@@ -94,6 +97,9 @@ struct zznvcodec_encoder_t {
 		mMaxPreloadBuffers = 2;
 		mPreloadBuffersIndex = 0;
 		memset(mOutputPlaneFDs, -1, sizeof(mOutputPlaneFDs));
+
+		mColorInformation = ZZNVCODEC_COLOR_INFORMATION_601;
+		bExtColorFmt = 0;
 	}
 
 	~zznvcodec_encoder_t() {
@@ -147,6 +153,14 @@ struct zznvcodec_encoder_t {
 			mFrameRateDeno = ((int*)pValue)[1];
 			break;
 
+		case ZZNVCODEC_PROP_COLORINFORMATION:
+			mColorInformation = (zznvcodec_color_information_t)*(int*)pValue;
+			break;
+
+		case ZZNVCODEC_PROP_EXTCOLORFMT:
+			bExtColorFmt = *(int*)pValue;
+			break;
+
 		default:
 			LOGE("%s(%d): unexpected value, nProperty = %d", __FUNCTION__, __LINE__, nProperty);
 			break;
@@ -171,23 +185,45 @@ struct zznvcodec_encoder_t {
 			LOGE("%s(%d): reqbufs failed for output plane V4L2_MEMORY_DMABUF", __FUNCTION__, __LINE__);
 			return ret;
 		}
-
 		NvBufSurfaceColorFormat nColorFormat;
 		switch(mFormat) {
-		case ZZNVCODEC_PIXEL_FORMAT_NV12:
-			nColorFormat = NVBUF_COLOR_FORMAT_NV12;
+		case ZZNVCODEC_PIXEL_FORMAT_NV12:	
+			if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_SMPTE170M || (v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_DEFAULT)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_NV12 : nColorFormat = NVBUF_COLOR_FORMAT_NV12_ER;
+			else if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_REC709)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_NV12_709 : nColorFormat = NVBUF_COLOR_FORMAT_NV12_709_ER;
+			
 			break;
-		case ZZNVCODEC_PIXEL_FORMAT_NV24:
-			nColorFormat = NVBUF_COLOR_FORMAT_NV24;
-			break;
-		case ZZNVCODEC_PIXEL_FORMAT_YV24:	//Input is YV24(YVU), NV format is YUV444(YUV)
-			nColorFormat = NVBUF_COLOR_FORMAT_YUV444;
-			break;			
+
 		case ZZNVCODEC_PIXEL_FORMAT_YUV420P:
 		case ZZNVCODEC_PIXEL_FORMAT_YUYV422:
-			nColorFormat = NVBUF_COLOR_FORMAT_YUV420;
+
+			if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_SMPTE170M || (v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_DEFAULT)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_YUV420 : nColorFormat = NVBUF_COLOR_FORMAT_YUV420_ER;
+			else if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_REC709)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_YUV420_709 : nColorFormat = NVBUF_COLOR_FORMAT_YUV420_709_ER;
+			
 			break;
 		
+		case ZZNVCODEC_PIXEL_FORMAT_NV24:
+
+			//NV24 color information.
+			if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_SMPTE170M || (v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_DEFAULT)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_NV24 : nColorFormat = NVBUF_COLOR_FORMAT_NV24_ER;
+			else if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_REC709)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_NV24_709 : nColorFormat = NVBUF_COLOR_FORMAT_NV24_709_ER;	
+			
+			break;
+		
+		case ZZNVCODEC_PIXEL_FORMAT_YV24:	//Input is YV24(YVU), NV format is YUV444(YUV)
+
+			if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_SMPTE170M || (v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_DEFAULT)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_YUV444 : nColorFormat = NVBUF_COLOR_FORMAT_YUV444_ER;
+			else if ((v4l2_colorspace)mColorInformation == V4L2_COLORSPACE_REC709)
+				!bExtColorFmt ? nColorFormat = NVBUF_COLOR_FORMAT_YUV444_709 : nColorFormat = NVBUF_COLOR_FORMAT_YUV444_709_ER;	
+			
+			break;			
+
 		default:
 			LOGE("%s(%d): unexpected value, mFormat=%d", __FUNCTION__, __LINE__, mFormat);
 			break;
@@ -372,8 +408,8 @@ struct zznvcodec_encoder_t {
 			LOGE("%s(%d): unexpected value, mFormat=%d", __FUNCTION__, __LINE__, mFormat);
 			break;
 		}
-
-		ret = mEncoder->setOutputPlaneFormat(nV4L2PixFmt, mWidth, mHeight);
+		
+		ret = mEncoder->setOutputPlaneFormat(nV4L2PixFmt, mWidth, mHeight, mColorInformation);
 		if(ret != 0) {
 			LOGE("%s(%d): mEncoder->setOutputPlaneFormat() failed, err=%d", __FUNCTION__, __LINE__, ret);
 		}
@@ -451,6 +487,13 @@ struct zznvcodec_encoder_t {
 			LOGE("%s(%d): mEncoder->setInsertVuiEnabled() failed, err=%d", __FUNCTION__, __LINE__, ret);
 		}
 #endif
+
+    	if (bExtColorFmt) {
+			ret = mEncoder->setExtendedColorFormat(true);
+			if(ret != 0) {
+				LOGE("%s(%d): mEncoder->setExtendedColorFormat() failed, err=%d", __FUNCTION__, __LINE__, ret);
+			}
+    	}
 
 		ret = mEncoder->setNumBFrames(0);
 		if(ret != 0) {

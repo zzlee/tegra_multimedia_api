@@ -110,7 +110,7 @@ NvVideoEncoder::~NvVideoEncoder()
 
 int
 NvVideoEncoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t width,
-        uint32_t height)
+        uint32_t height, uint32_t colorinformation)
 {
     struct v4l2_format format;
     uint32_t num_bufferplanes;
@@ -136,7 +136,8 @@ NvVideoEncoder::setOutputPlaneFormat(uint32_t pixfmt, uint32_t width,
     format.fmt.pix_mp.height = height;
     format.fmt.pix_mp.pixelformat = pixfmt;
     format.fmt.pix_mp.num_planes = num_bufferplanes;
-
+    format.fmt.pix_mp.colorspace = (v4l2_colorspace)colorinformation;
+    
     return output_plane.setFormat(format);
 }
 

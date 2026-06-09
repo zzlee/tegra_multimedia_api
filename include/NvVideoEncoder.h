@@ -89,7 +89,7 @@ public:
      * @param[in] height Height of the input buffers in pixels.
      * @return 0 for success, -1 otherwise.
      */
-    int setOutputPlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height);
+    int setOutputPlaneFormat(uint32_t pixfmt, uint32_t width, uint32_t height, uint32_t colorinformation);
     /**
      * Sets the format on the converter capture plane.
      *

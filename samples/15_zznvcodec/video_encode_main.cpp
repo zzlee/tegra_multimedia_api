@@ -1648,7 +1648,7 @@ encode_proc(context_t& ctx, int argc, char *argv[])
     /* Set encoder output plane format */
     ret =
         ctx.enc->setOutputPlaneFormat(ctx.raw_pixfmt, ctx.width,
-                                      ctx.height);
+                                      ctx.height, 0);
     TEST_ERROR(ret < 0, "Could not set output plane format", cleanup);
 
     if (ctx.num_frames_to_encode)

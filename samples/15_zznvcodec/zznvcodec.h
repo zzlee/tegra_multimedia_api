@@ -27,6 +27,8 @@ enum zznvcodec_props_t {
 	ZZNVCODEC_PROP_IFRAMEINTERVAL,		// int
 	ZZNVCODEC_PROP_LOWLATENCY,			// bool
 	ZZNVCODEC_PROP_FRAMERATE,			// int[2] (num/deno)
+	ZZNVCODEC_PROP_COLORINFORMATION,	// zznvcodec_color_information_t
+	ZZNVCODEC_PROP_EXTCOLORFMT,			// bool 
 };
 
 struct zznvcodec_video_plane_t {
@@ -55,6 +57,12 @@ enum zznvcodec_codec_type_t {
 	ZZNVCODEC_CODEC_TYPE_H264,
 	ZZNVCODEC_CODEC_TYPE_H265,
 	ZZNVCODEC_CODEC_TYPE_AV1,
+};
+
+enum zznvcodec_color_information_t {
+	ZZNVCODEC_COLOR_INFORMATION_DEFAULT = 0,
+	ZZNVCODEC_COLOR_INFORMATION_601 = 1,
+	ZZNVCODEC_COLOR_INFORMATION_709 = 3,
 };
 
 enum zznvcodec_backend_type_t {
